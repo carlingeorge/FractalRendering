@@ -3,7 +3,7 @@ project(Julia VERSION 1.0.0 LANGUAGES CXX)
 
 # Default to release builds
 if(NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE Release)
+   set(CMAKE_BUILD_TYPE Debug)
 endif()
 include(FetchContent)
 find_package(SFML 2 REQUIRED COMPONENTS graphics system window)

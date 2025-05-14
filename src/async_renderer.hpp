@@ -3,36 +3,54 @@
 #include <mutex>
 #include <array>
 #include <chrono>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cstdint>
-#include <sstream>
 
 #include "utils/va_grid.hpp"
 #include "utils/palette.hpp"
 #include "utils/thread_pool.hpp"
 #include "utils/to_string.hpp"
 #include "utils/number_generator.hpp"
+#include "utils/image_loader.hpp"
 
 #include "config.hpp"
 
 
 template<typename TFloatType>
-float julia_iter(sf::Vector2<TFloatType> pos)
+
+
+sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader)
 {
     uint32_t i{0};
     TFloatType zr{pos.x};
     TFloatType zi{pos.y};
     TFloatType mod = zr * zr + zi * zi;
+
+    double multiplier = 1.0f;
+
+    TFloatType dist = 1e20f;
     while (mod < TFloatType{4.0} && i < Config::max_iteration) {
         const TFloatType tmp = zr;
-        zr = zr * zr - zi * zi + pos.x;//Config::julia_r;
-        zi = TFloatType{2.0} * zi * tmp + pos.y;//Config::julia_i;
+
+        zr = zr * zr - zi * zi + Config::julia_r;//pos.x;//
+        zi = TFloatType{2.0} * zi * tmp + Config::julia_i; // + pos.y;//
+
         mod = zr * zr + zi * zi;
+
+        dist = std::min(dist,mod);
+
+
+
+        if(loader->isIn(zr*multiplier,zi*multiplier)){
+            return loader->getValue(zr*multiplier,zi*multiplier);
+        }
+
+        
         ++i;
     }
-    return static_cast<float>(i) - static_cast<float>(log2(std::max(TFloatType(1.0), log2(mod))));
+    
+    //mod = std::sqrt(dist);
+    TFloatType adjusted_dist = std::sqrt(dist) / 2 * 255;
+    //return static_cast<float>((adjusted_dist)*Config::max_iteration) - static_cast<float>(log2(std::max(TFloatType(1.0), log2(adjusted_dist))));
+    return {adjusted_dist,adjusted_dist,adjusted_dist};
 }
 
 template<typename TFloatType>
@@ -60,6 +78,8 @@ struct AsyncRenderer
 
     TFloatType              render_zoom   = 1.0;
     sf::Vector2<TFloatType> render_center = {};
+
+    ImageLoader loader = ImageLoader();
 
     uint32_t state_idx   = 0;
     uint32_t texture_idx = 0;
@@ -125,7 +145,13 @@ struct AsyncRenderer
         , states{RenderState<TFloatType>(width, height), RenderState<TFloatType>(width, height)}
     {
         requested_zoom = zoom_;
-        loadPalette();
+        //loadPalette();
+        loader.loadImage("../palette/blurred.png");
+        
+        palette.addColorPoint(0.0f,sf::Color{0,0,0});
+
+        palette.addColorPoint(1.0f,sf::Color{255,255,255});
+    
 
         // Precompute Monte Carlo offsets
         for (auto& o : anti_aliasing_offsets) {
@@ -170,14 +196,16 @@ struct AsyncRenderer
                         // AA color accumulator
                         sf::Vector3f color_vec;
                         // Monte Carlo color integration
+                        /*
                         for (uint32_t i{Config::samples_count}; i--;) {
                             const sf::Vector2<TFloatType> off        = anti_aliasing_offsets[i] / render_zoom;
-                            const float                   iter       = julia_iter<TFloatType>({xf + off.x, yf + off.y});
+                            const sf::Color                   iter       = ;
                             const float                   iter_ratio = iter / static_cast<float>(Config::max_iteration);
-                            color_vec += palette.getColorVec(iter_ratio);
-                        }
+                            color_vec += {iter;//palette.getColorVec(iter_ratio);
+                        }*/
                         // Update color
-                        grid.setCellColor(x, y, Palette::vec3ToColor(color_vec * sample_coef));
+                        const sf::Color c = julia_iter<TFloatType>({xf, yf},&loader);
+                        grid.setCellColor(x, y, c);
                     }
                 }
             });

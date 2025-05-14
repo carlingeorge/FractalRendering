@@ -7,7 +7,7 @@
 
 int main()
 {
-    const sf::Vector2u window_size{2560, 1440};
+    const sf::Vector2u window_size{2560, 1600};
     sf::RenderWindow window(sf::VideoMode(window_size.x, window_size.y), "Fractal", sf::Style::Fullscreen);
     window.setFramerateLimit(60);
     window.setMouseCursorVisible(false);
