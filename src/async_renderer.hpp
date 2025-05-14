@@ -3,6 +3,11 @@
 #include <mutex>
 #include <array>
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdint>
+#include <sstream>
 
 #include "utils/va_grid.hpp"
 #include "utils/palette.hpp"
@@ -68,24 +73,60 @@ struct AsyncRenderer
 
     float fade_time = Config::fade_time;
 
+    sf::Color hexToColor(const std::string& hex) const {
+        unsigned int rgb;
+        std::stringstream ss;
+        ss << std::hex << hex.substr(1);  // skip the #
+        ss >> rgb;
+
+        return sf::Color{(rgb >> 16) & 0xFF,(rgb >> 8) & 0xFF,rgb & 0xFF};
+    }
+
+    void loadPalette() {
+        std::array<sf::Color, 18> colors;
+        std::ifstream file("../palette/IMG_1002/light-theme.json");
+        if (!file.is_open()) {
+            throw(12);
+            return;
+        }
+
+        std::string line;
+        int index = 0;
+        bool not_background = true;
+        
+        while (std::getline(file, line) && index < colors.size()) {
+            size_t colon = line.find(':');
+            size_t quote1 = line.find('"', colon);
+            size_t quote2 = line.find('"', quote1 + 1);
+            if (quote1 != std::string::npos && quote2 != std::string::npos) {
+                std::string hex = line.substr(quote1 + 1, quote2 - quote1 - 1);
+
+
+                    colors[index++] = hexToColor(hex);
+                
+                
+            }
+        }
+
+        file.close();
+
+    
+        for(int i = 1;i<colors.size();i++){
+            palette.addColorPoint((i-1)/(17.0f), colors[i]);
+
+        }
+
+        palette.addColorPoint(1.0f,colors[0]);
+
+    }
 
     AsyncRenderer(uint32_t width, uint32_t height, TFloatType zoom_)
         : thread_pool{16}
         , states{RenderState<TFloatType>(width, height), RenderState<TFloatType>(width, height)}
     {
         requested_zoom = zoom_;
-        /*
-        palette.addColorPoint(0.0f , sf::Color{25, 24, 23});
-        palette.addColorPoint(0.03f, sf::Color{120, 90, 70});
-        palette.addColorPoint(0.05f, sf::Color{130, 24, 23});
-        palette.addColorPoint(0.25f, sf::Color{250, 179, 100});
-        palette.addColorPoint(0.5f , sf::Color{43, 65, 98});
-        palette.addColorPoint(0.85f, sf::Color{11, 110, 79});
-        palette.addColorPoint(0.95f, sf::Color{150, 110, 79});
-        palette.addColorPoint(1.0f , sf::Color{255, 255, 255});
-*/
-        palette.addColorPoint(0.0f, sf::Color{0,0,0});
-        palette.addColorPoint(1.0f,sf::Color{255,255,255});
+        loadPalette();
+
         // Precompute Monte Carlo offsets
         for (auto& o : anti_aliasing_offsets) {
             o.x = RNGf::getUnder(1.0f);
