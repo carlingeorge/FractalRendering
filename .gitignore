@@ -1,2 +1,7 @@
 cmake-build-*/
 .idea/
+build/
+CMakeCache.txt
+CMakeFiles
+palette
+.vscode

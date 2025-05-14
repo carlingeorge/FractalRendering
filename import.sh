@@ -1,0 +1,1 @@
+palex -f $1 -o ./palette

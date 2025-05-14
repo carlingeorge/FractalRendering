@@ -42,6 +42,9 @@ struct RenderState
     {}
 };
 
+
+
+
 template<typename TFloatType>
 struct AsyncRenderer
 {
@@ -65,11 +68,13 @@ struct AsyncRenderer
 
     float fade_time = Config::fade_time;
 
+
     AsyncRenderer(uint32_t width, uint32_t height, TFloatType zoom_)
         : thread_pool{16}
         , states{RenderState<TFloatType>(width, height), RenderState<TFloatType>(width, height)}
     {
         requested_zoom = zoom_;
+        /*
         palette.addColorPoint(0.0f , sf::Color{25, 24, 23});
         palette.addColorPoint(0.03f, sf::Color{120, 90, 70});
         palette.addColorPoint(0.05f, sf::Color{130, 24, 23});
@@ -78,7 +83,9 @@ struct AsyncRenderer
         palette.addColorPoint(0.85f, sf::Color{11, 110, 79});
         palette.addColorPoint(0.95f, sf::Color{150, 110, 79});
         palette.addColorPoint(1.0f , sf::Color{255, 255, 255});
-
+*/
+        palette.addColorPoint(0.0f, sf::Color{0,0,0});
+        palette.addColorPoint(1.0f,sf::Color{255,255,255});
         // Precompute Monte Carlo offsets
         for (auto& o : anti_aliasing_offsets) {
             o.x = RNGf::getUnder(1.0f);

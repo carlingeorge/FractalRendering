@@ -9,7 +9,7 @@ int main()
 {
     const sf::Vector2u window_size{2560, 1440};
     sf::RenderWindow window(sf::VideoMode(window_size.x, window_size.y), "Fractal", sf::Style::Fullscreen);
-    window.setFramerateLimit(60);
+    window.setFramerateLimit(240);
     window.setMouseCursorVisible(false);
     window.setKeyRepeatEnabled(false);
 
@@ -21,7 +21,7 @@ int main()
         window.close();
     });
 
-    const auto                     zoom_factor = static_cast<Config::FloatType>(1.005);
+    const auto                     zoom_factor = static_cast<Config::FloatType>(1.002);
     const auto                     speed       = static_cast<Config::FloatType>(1.0);
     auto                           zoom        = static_cast<Config::FloatType>(window.getSize().y) / 2;
     sf::Vector2<Config::FloatType> center      {0.0, 0.0};
