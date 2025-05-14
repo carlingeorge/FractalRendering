@@ -84,7 +84,7 @@ struct AsyncRenderer
 
     void loadPalette() {
         std::array<sf::Color, 18> colors;
-        std::ifstream file("../palette/IMG_1002/light-theme.json");
+        std::ifstream file("../palette/light-theme.json");
         if (!file.is_open()) {
             throw(12);
             return;
