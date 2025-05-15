@@ -17,7 +17,7 @@
 template<typename TFloatType>
 
 
-sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader)
+sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader, Palette* palette)
 {
     uint32_t i{0};
     TFloatType zr{pos.x};
@@ -27,6 +27,10 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader)
     double multiplier = 1.0f;
 
     TFloatType dist = 1e20f;
+
+    bool locked_in = false;
+    sf::Color loader_value;
+
     while (mod < TFloatType{4.0} && i < Config::max_iteration) {
         const TFloatType tmp = zr;
 
@@ -39,8 +43,9 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader)
 
 
 
-        if(loader->isIn(zr*multiplier,zi*multiplier)){
-            return loader->getValue(zr*multiplier,zi*multiplier);
+        if(loader->isIn(zr*multiplier,zi*multiplier) && !locked_in){
+            locked_in=true;
+            loader_value = loader->getValue(zr*multiplier,zi*multiplier);
         }
 
         
@@ -48,9 +53,15 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader)
     }
     
     //mod = std::sqrt(dist);
-    TFloatType adjusted_dist = std::sqrt(dist) / 2 * 255;
+    TFloatType adjusted_dist = std::sqrt(dist) / 2;
+
+   // TFloatType second_dist = adjusted_dist * 50
+
+    if(locked_in){
+        return sf::Color{loader_value.r , loader_value.g, loader_value.b};
+    }
     //return static_cast<float>((adjusted_dist)*Config::max_iteration) - static_cast<float>(log2(std::max(TFloatType(1.0), log2(adjusted_dist))));
-    return {adjusted_dist,adjusted_dist,adjusted_dist};
+    return palette->getColor(adjusted_dist);
 }
 
 template<typename TFloatType>
@@ -145,12 +156,12 @@ struct AsyncRenderer
         , states{RenderState<TFloatType>(width, height), RenderState<TFloatType>(width, height)}
     {
         requested_zoom = zoom_;
-        //loadPalette();
+        loadPalette();
         loader.loadImage("../palette/blurred.png");
         
-        palette.addColorPoint(0.0f,sf::Color{0,0,0});
+        //palette.addColorPoint(0.0f,sf::Color{0,0,0});
 
-        palette.addColorPoint(1.0f,sf::Color{255,255,255});
+        //palette.addColorPoint(1.0f,sf::Color{255,255,255});
     
 
         // Precompute Monte Carlo offsets
@@ -204,7 +215,7 @@ struct AsyncRenderer
                             color_vec += {iter;//palette.getColorVec(iter_ratio);
                         }*/
                         // Update color
-                        const sf::Color c = julia_iter<TFloatType>({xf, yf},&loader);
+                        const sf::Color c = julia_iter<TFloatType>({xf, yf},&loader,&palette);
                         grid.setCellColor(x, y, c);
                     }
                 }

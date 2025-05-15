@@ -79,7 +79,7 @@ struct ImageLoader
 
        // std::cout << (int)loaded_image[absolute_pixel_num] << std::endl;
         double a = loaded_image[abs_pixel+3] / 255.0f;
-        return sf::Color{loaded_image[abs_pixel]*a,loaded_image[abs_pixel+1]*a,loaded_image[abs_pixel+2]*a};
+        return sf::Color{loaded_image[abs_pixel],loaded_image[abs_pixel+1],loaded_image[abs_pixel+2]};
 
 
 
