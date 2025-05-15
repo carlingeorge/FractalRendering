@@ -34,8 +34,8 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader, Palette* 
     while (mod < TFloatType{4.0} && i < Config::max_iteration) {
         const TFloatType tmp = zr;
 
-        zr = zr * zr - zi * zi + Config::julia_r;//pos.x;//
-        zi = TFloatType{2.0} * zi * tmp + Config::julia_i; // + pos.y;//
+        zr = zr * zr - zi * zi +  (Config::mandelbrot ? pos.x : Config::julia_r);
+        zi = TFloatType{2.0} * zi * tmp + (Config::mandelbrot ? pos.y : Config::julia_i);
 
         mod = zr * zr + zi * zi;
 
@@ -43,7 +43,7 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader, Palette* 
 
 
 
-        if(loader->isIn(zr*multiplier,zi*multiplier) && !locked_in){
+        if(!locked_in && Config::image_sample && loader->isIn(zr*multiplier,zi*multiplier) ){
             locked_in=true;
             loader_value = loader->getValue(zr*multiplier,zi*multiplier);
         }
@@ -61,7 +61,12 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader, Palette* 
         return sf::Color{loader_value.r , loader_value.g, loader_value.b};
     }
     //return static_cast<float>((adjusted_dist)*Config::max_iteration) - static_cast<float>(log2(std::max(TFloatType(1.0), log2(adjusted_dist))));
-    return palette->getColor(adjusted_dist);
+    if(Config::dot_orbit_trap){
+    return palette->getColor(1-adjusted_dist);
+    }
+    else{
+        return palette->getColor(i *1.0f /Config::max_iteration);
+    }
 }
 
 template<typename TFloatType>
