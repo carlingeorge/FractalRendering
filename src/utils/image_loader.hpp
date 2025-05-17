@@ -40,7 +40,7 @@ struct ImageLoader
         
     }
 
-    bool isIn(double x, double y){
+    int isIn(double x, double y){
         int integer_x = x * this->w + this->w/2;
         int integer_y = y * this->h + this->h/2;
 
