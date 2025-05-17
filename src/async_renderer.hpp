@@ -30,6 +30,8 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader, Palette* 
 
     bool locked_in = false;
     sf::Color loader_value;
+    double opacity;
+    sf::Color sub_color;
 
     while (mod < TFloatType{4.0} && i < Config::max_iteration) {
         const TFloatType tmp = zr;
@@ -44,6 +46,11 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader, Palette* 
 
 
         if(!locked_in && Config::image_sample && loader->isIn(zr*multiplier,zi*multiplier) ){
+            if(loader->isIn(zr*multiplier,zi*multiplier)<255){
+                sf::Vector2 pos{zr*multiplier,zi*multiplier};
+                sub_color = julia_iter(pos,loader,palette);
+            }
+            opacity = loader->isIn(zr*multiplier,zi*multiplier)/255.0f;
             locked_in=true;
             loader_value = loader->getValue(zr*multiplier,zi*multiplier);
         }
@@ -54,19 +61,32 @@ sf::Color julia_iter(sf::Vector2<TFloatType> pos, ImageLoader* loader, Palette* 
     
     //mod = std::sqrt(dist);
     TFloatType adjusted_dist = std::sqrt(dist) / 2;
+    double background_density;
 
    // TFloatType second_dist = adjusted_dist * 50
-
-    if(locked_in){
-        return sf::Color{loader_value.r , loader_value.g, loader_value.b};
-    }
-    //return static_cast<float>((adjusted_dist)*Config::max_iteration) - static_cast<float>(log2(std::max(TFloatType(1.0), log2(adjusted_dist))));
     if(Config::dot_orbit_trap){
-    return palette->getColor(1-adjusted_dist);
+        background_density = 1-adjusted_dist;
     }
     else{
-        return palette->getColor(i *1.0f /Config::max_iteration);
+        background_density = i *1.0f /Config::max_iteration;
     }
+
+    if(locked_in){
+
+        //sf::Color background = palette->getColor(background_density);
+
+
+
+
+
+
+        return sf::Color{loader_value.r*opacity + sub_color.r*(1-opacity) ,
+                         loader_value.g*opacity + sub_color.g*(1-opacity),
+                         loader_value.b*opacity + sub_color.b*(1-opacity)};
+    }
+    //return static_cast<float>((adjusted_dist)*Config::max_iteration) - static_cast<float>(log2(std::max(TFloatType(1.0), log2(adjusted_dist))));
+
+    return palette->getColor(background_density);
 }
 
 template<typename TFloatType>
@@ -161,12 +181,18 @@ struct AsyncRenderer
         , states{RenderState<TFloatType>(width, height), RenderState<TFloatType>(width, height)}
     {
         requested_zoom = zoom_;
-        loadPalette();
+        if(Config::use_color){
+            loadPalette();
+
+        }
+        else{
+            palette.addColorPoint(0.0f,sf::Color{0,0,0});
+
+            palette.addColorPoint(1.0f,sf::Color{255,255,255});
+        }
         loader.loadImage("../palette/blurred.png");
         
-        //palette.addColorPoint(0.0f,sf::Color{0,0,0});
 
-        //palette.addColorPoint(1.0f,sf::Color{255,255,255});
     
 
         // Precompute Monte Carlo offsets

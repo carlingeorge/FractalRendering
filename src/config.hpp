@@ -13,4 +13,6 @@ struct Config
     static constexpr bool      image_sample  = true;
     static constexpr bool      dot_orbit_trap= false;
     static constexpr bool      mandelbrot    = false;
+    static constexpr bool      use_color     = true;
+
 };
